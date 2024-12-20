@@ -3,10 +3,106 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My GitHub Pages Site</title>
+  <title>AI QC Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      background-color: #f8f9fa;
+      color: #343a40;
+    }
+    header {
+      background-color: #343a40;
+      color: #ffffff;
+      padding: 1rem 0;
+    }
+    header h1 {
+      margin: 0;
+    }
+    section {
+      padding: 2rem;
+    }
+    .demo-section {
+      border: 2px dashed #6c757d;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin: 2rem auto;
+      width: 80%;
+      max-width: 600px;
+      background-color: #ffffff;
+    }
+    .upload-area {
+      margin: 1rem 0;
+    }
+    input[type="file"] {
+      margin: 1rem 0;
+    }
+    button {
+      background-color: #28a745;
+      color: #ffffff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    .output {
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-  <h1>Welcome to My GitHub Pages Site</h1>
-  <p>This is a basic site hosted on GitHub Pages!</p>
+  <header>
+    <h1>AI QC Demo Lander</h1>
+    <p>Experience the power of AI-driven call quality control!</p>
+  </header>
+
+  <section>
+    <h2>DIY Demo</h2>
+    <div class="demo-section">
+      <h3>Upload Your Call Recording</h3>
+      <div class="upload-area">
+        <input type="file" id="file-upload" accept="audio/*">
+      </div>
+      <button id="process-button">Process Recording</button>
+      <div class="output" id="output-area">
+        <p>Upload a file to see the results!</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Integrations</h2>
+    <p>Easily integrate with platforms like TrackDrive, Retreaver, and more!</p>
+  </section>
+
+  <script>
+    document.getElementById('process-button').addEventListener('click', () => {
+      const fileInput = document.getElementById('file-upload');
+      const outputArea = document.getElementById('output-area');
+
+      if (fileInput.files.length === 0) {
+        outputArea.innerHTML = '<p style="color: red;">Please upload a file first!</p>';
+        return;
+      }
+
+      outputArea.innerHTML = '<p>Processing your file...</p>';
+
+      // Simulating API call for now
+      setTimeout(() => {
+        outputArea.innerHTML = `
+          <p>Call Disposition: <strong>Positive</strong></p>
+          <p>Call Notes: <strong>Customer expressed interest in the product.</strong></p>
+          <p style="color: green;">🎉 Demo complete! 🎉</p>
+        `;
+      }, 2000);
+    });
+  </script>
 </body>
 </html>
