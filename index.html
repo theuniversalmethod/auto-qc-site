@@ -4,31 +4,81 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>The Universal Method - Auto QC AI Demo</title>
+  <!-- Google Fonts (optional for a nicer look) -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap"
+    rel="stylesheet"
+  />
+  <!-- reCAPTCHA v3 script (replace site key below with yours) -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6LeCZbMqAAAAACTPAVLrS-NQtNWat69AfwVZqG__"></script>
   <style>
+    /* Basic Reset */
+    * {
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      margin: 0; padding: 0;
-      text-align: center;
+      font-family: 'Roboto', Arial, sans-serif;
       background-color: #f8f9fa;
       color: #343a40;
     }
+
     header {
-      background-color: #343a40;
+      background: linear-gradient(
+        135deg,
+        rgba(52, 58, 64, 1) 40%,
+        rgba(33, 37, 41, 1) 100%
+      );
       color: #ffffff;
-      padding: 1rem 0;
+      padding: 2rem 1rem;
+      text-align: center;
+      margin-bottom: 2rem;
     }
-    header h1 { margin: 0; }
-    section { padding: 2rem; }
+
+    header h1 {
+      font-weight: 700;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-weight: 300;
+      font-size: 1.2rem;
+    }
+
+    section {
+      max-width: 800px;
+      margin: 0 auto 2rem auto;
+      padding: 0 1rem;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
     .demo-section {
       border: 2px dashed #6c757d;
       border-radius: 10px;
       padding: 1.5rem;
       margin: 2rem auto;
-      width: 80%; max-width: 600px;
+      max-width: 600px;
       background-color: #ffffff;
     }
-    .upload-area { margin: 1rem 0; }
-    input[type="file"] { margin: 1rem 0; }
+
+    .upload-area {
+      margin: 1rem 0;
+    }
+
+    input[type="file"] {
+      margin: 1rem 0;
+      font-size: 1rem;
+    }
+
     button {
       background-color: #28a745;
       color: #ffffff;
@@ -37,17 +87,38 @@
       border-radius: 5px;
       cursor: pointer;
       font-size: 1rem;
+      transition: background-color 0.2s;
     }
-    button:hover { background-color: #218838; }
+
+    button:hover {
+      background-color: #218838;
+    }
+
     .output {
       margin-top: 1rem;
       font-weight: bold;
+      min-height: 2rem; /* ensures a little space is reserved */
     }
-    .error { color: red; }
-    .success { color: green; }
+
+    .error {
+      color: red;
+      font-weight: 400;
+    }
+
+    .success {
+      color: green;
+      font-weight: 400;
+    }
+
+    /* Center the recaptcha note */
+    .recaptcha-note {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+      color: #6c757d;
+      font-style: italic;
+    }
   </style>
-  <!-- Include Google reCAPTCHA v2 script -->
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
   <header>
@@ -63,13 +134,6 @@
         <input type="file" id="file-upload" accept="audio/*">
       </div>
 
-      <!-- Google reCAPTCHA widget -->
-      <div 
-        class="g-recaptcha" 
-        data-sitekey="6LeCZbMqAAAAACTPAVLrS-NQtNWat69AfwVZqG__"
-        data-callback="onCaptchaSuccess">
-      </div>
-      
       <!-- The button that triggers the processing -->
       <button id="process-button">Process Recording</button>
       
@@ -84,12 +148,16 @@
     <p>Easily integrate with platforms like TrackDrive, Retreaver, and more!</p>
   </section>
 
+  <!-- This text is purely decorative for v3 since there's no checkbox to show -->
+  <div class="recaptcha-note">
+    Protected by reCAPTCHA v3
+  </div>
+
   <script>
-    // =====================================================
-    // ========== 1. Rate Limiting (Client-Side) ===========
-    // =====================================================
+    // ===============================================
+    // =========== 1. Rate Limiting (Client) =========
+    // ===============================================
     function checkRateLimit() {
-      // Get existing data from localStorage
       const rateLimitData = localStorage.getItem('uploadAttempts');
       const today = new Date().toDateString(); // e.g., "Thu Jan 9 2025"
 
@@ -98,97 +166,100 @@
         attempts: 0
       };
 
-      // If we have something stored
       if (rateLimitData) {
         const parsedData = JSON.parse(rateLimitData);
-
-        // Check if it's for the same day
         if (parsedData.date === today) {
           attemptsObj = parsedData;
         }
       }
-
-      // Return the current attempts object
       return attemptsObj;
     }
 
     function incrementRateLimit(attemptsObj) {
-      // Update attempts
       attemptsObj.attempts += 1;
-      // Store it back in localStorage
       localStorage.setItem('uploadAttempts', JSON.stringify(attemptsObj));
     }
 
-    // =====================================================
-    // ========== 2. Google reCAPTCHA Handling =============
-    // =====================================================
-    let captchaVerified = false;
-
-    // This function is called automatically by reCAPTCHA when
-    // the user successfully completes the captcha.
-    function onCaptchaSuccess() {
-      captchaVerified = true;
+    // ===============================================
+    // =========== 2. reCAPTCHA v3 Handling ==========
+    // ===============================================
+    // We'll dynamically request a token each time user clicks "Process Recording".
+    // That token can then be sent along with the file for server-side verification.
+    function getRecaptchaToken() {
+      return new Promise((resolve, reject) => {
+        if (!window.grecaptcha) {
+          reject(new Error('reCAPTCHA not loaded'));
+          return;
+        }
+        // The action can be any string, e.g., "upload"
+        grecaptcha.ready(() => {
+          grecaptcha.execute('6LeCZbMqAAAAACTPAVLrS-NQtNWat69AfwVZqG__', { action: 'upload' })
+            .then((token) => resolve(token))
+            .catch((err) => reject(err));
+        });
+      });
     }
 
-    // =====================================================
-    // ========== 3. File Upload + POST to Endpoint ========
-    // =====================================================
+    // ===============================================
+    // =========== 3. File Upload + POST =============
+    // ===============================================
     document.getElementById('process-button').addEventListener('click', async () => {
       const fileInput = document.getElementById('file-upload');
       const outputArea = document.getElementById('output-area');
       outputArea.innerHTML = ''; // Clear existing messages
 
-      // ----- Check Rate Limit (Client-Side) -----
+      // 1) Check Rate Limit
       const attemptsObj = checkRateLimit();
       if (attemptsObj.attempts >= 3) {
         outputArea.innerHTML = '<p class="error">You have reached the 3-uploads-per-day limit.</p>';
         return;
       }
 
-      // ----- Check if a file is selected -----
+      // 2) Check if a file is selected
       if (!fileInput.files.length) {
         outputArea.innerHTML = '<p class="error">Please upload a file first!</p>';
         return;
       }
 
-      // ----- Check if reCAPTCHA is completed -----
-      if (!captchaVerified) {
-        outputArea.innerHTML = '<p class="error">Please complete the reCAPTCHA!</p>';
+      // 3) Request a reCAPTCHA v3 token
+      outputArea.innerHTML = '<p>Verifying reCAPTCHA. Please wait...</p>';
+      let recaptchaToken;
+      try {
+        recaptchaToken = await getRecaptchaToken();
+      } catch (err) {
+        outputArea.innerHTML = `<p class="error">reCAPTCHA Error: ${err.message}</p>`;
         return;
       }
 
-      // If everything is good, show a "processing" message
+      // 4) Now that we have a token, proceed with file upload
       outputArea.innerHTML = '<p>Processing your file...</p>';
 
-      // Create FormData and append the selected file
       const formData = new FormData();
       formData.append('file', fileInput.files[0]);
+      // Attach the v3 token, so the server can verify it
+      formData.append('recaptchaToken', recaptchaToken);
 
       try {
-        // Make the POST request with the form data
         const response = await fetch('https://universal-method.app.n8n.cloud/webhook-test/site-demo', {
           method: 'POST',
           body: formData
         });
 
         if (!response.ok) {
-          // If the server returned a status outside of the 200–299 range
           throw new Error(`Server returned ${response.status} - ${response.statusText}`);
         }
 
-        // Attempt to parse the response as JSON
         const data = await response.json();
 
         // Increment the local rate limit count
         incrementRateLimit(attemptsObj);
 
-        // Show some success message or data from the server
+        // Show success message
         outputArea.innerHTML = `
           <p class="success">File successfully uploaded!</p>
           <p>Server Response: ${JSON.stringify(data)}</p>
         `;
       } catch (error) {
-        // Handle errors (e.g., network errors, JSON parse errors)
         outputArea.innerHTML = `<p class="error">Error: ${error.message}</p>`;
       }
     });
