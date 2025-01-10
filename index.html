@@ -391,20 +391,31 @@
           // 8) Rate limit count up
           incrementRateLimit(attemptsObj);
 
-          // Check the response
-          // Must be: [ { "Dispo Name": "...", "Call Notes": "..." } ]
+          // ============ ADJUSTED RESPONSE HANDLER ============ //
+          // We can handle both array-of-objects or single-object.
           if (Array.isArray(data) && data.length > 0) {
-            const { ['Dispo Name']: disposition, ['Call Notes']: callNotes } = data[0];
-
-            // Clear the output area
+            // It's an array; parse the first item
+            const { ['Dispo Name']: disposition, ['Call Notes']: callNotes } = data[0] || {};
+            if (!disposition || !callNotes) {
+              outputArea.innerHTML = '<p class="error">Error: Missing required keys in array item.</p>';
+              return;
+            }
             outputArea.innerHTML = '<p class="success">Auto QC Completed!</p>';
-            // Show the modal (Disposition/Call Notes) + confetti
+            showModal(disposition, callNotes);
+
+          } else if (data && data['Dispo Name'] && data['Call Notes']) {
+            // It's a single object
+            const disposition = data['Dispo Name'];
+            const callNotes   = data['Call Notes'];
+            outputArea.innerHTML = '<p class="success">Auto QC Completed!</p>';
             showModal(disposition, callNotes);
 
           } else {
             // Unexpected format
             outputArea.innerHTML = '<p class="error">Error: Unexpected server response format.</p>';
           }
+          // ========== END of ADJUSTED RESPONSE HANDLER ========== //
+
         } catch (error) {
           outputArea.innerHTML = `<p class="error">Error: ${error.message}</p>`;
         }
