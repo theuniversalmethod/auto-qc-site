@@ -4,39 +4,49 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>The Universal Method - Auto QC AI Demo</title>
-  <!-- reCAPTCHA v3 script (replace with your actual site key) -->
+  <!-- Google Fonts (optional for a nicer look) -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap"
+    rel="stylesheet"
+  />
+  <!-- reCAPTCHA v3 script (replace site key below with yours) -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LeCZbMqAAAAACTPAVLrS-NQtNWat69AfwVZqG__"></script>
-
   <style>
-    /* Basic reset */
+    /* Basic Reset */
     * {
-      margin: 0;
-      padding: 0;
+      margin: 0; 
+      padding: 0; 
       box-sizing: border-box;
     }
 
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Roboto', Arial, sans-serif;
       background-color: #f8f9fa;
       color: #343a40;
-      text-align: center;
     }
 
     header {
-      background-color: #343a40;
+      background: linear-gradient(
+        135deg,
+        rgba(52, 58, 64, 1) 40%,
+        rgba(33, 37, 41, 1) 100%
+      );
       color: #ffffff;
       padding: 2rem 1rem;
+      text-align: center;
       margin-bottom: 2rem;
     }
 
     header h1 {
+      font-weight: 700;
       font-size: 2rem;
       margin-bottom: 0.5rem;
     }
 
     header p {
-      font-size: 1.2rem;
       font-weight: 300;
+      font-size: 1.2rem;
     }
 
     section {
@@ -46,6 +56,11 @@
       text-align: center;
     }
 
+    h2 {
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
     .demo-section {
       border: 2px dashed #6c757d;
       border-radius: 10px;
@@ -53,12 +68,6 @@
       margin: 2rem auto;
       max-width: 600px;
       background-color: #ffffff;
-    }
-
-    h2 {
-      margin-bottom: 1rem;
-      font-weight: bold;
-      font-size: 1.5rem;
     }
 
     .upload-area {
@@ -88,7 +97,7 @@
     .output {
       margin-top: 1rem;
       font-weight: bold;
-      min-height: 2rem; /* ensures a bit of space */
+      min-height: 2rem; /* ensures a little space is reserved */
     }
 
     .error {
@@ -101,59 +110,13 @@
       font-weight: 400;
     }
 
+    /* Center the recaptcha note */
     .recaptcha-note {
       text-align: center;
       margin: 1rem 0;
       font-size: 0.9rem;
       color: #6c757d;
       font-style: italic;
-    }
-
-    /* ===== Modal Styles ===== */
-    #result-modal {
-      display: none; /* hidden by default */
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 9998;
-    }
-    #modal-content {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #fff;
-      border-radius: 8px;
-      padding: 2rem;
-      text-align: center;
-      max-width: 400px;
-      width: 80%;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-      z-index: 9999;
-    }
-    #modal-title {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-    }
-    #modal-text {
-      font-size: 1rem;
-      margin-bottom: 1.5rem;
-      line-height: 1.5;
-    }
-    #close-modal {
-      background-color: #007bff;
-      color: #ffffff;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 1rem;
-    }
-    #close-modal:hover {
-      background-color: #0056b3;
     }
   </style>
 </head>
@@ -173,7 +136,7 @@
 
       <!-- The button that triggers the processing -->
       <button id="process-button">Process Recording</button>
-
+      
       <div class="output" id="output-area">
         <p>Upload a file to see the results!</p>
       </div>
@@ -185,52 +148,15 @@
     <p>Easily integrate with platforms like TrackDrive, Retreaver, and more!</p>
   </section>
 
-  <!-- A note for recaptcha v3 (no checkbox) -->
+  <!-- This text is purely decorative for v3 since there's no checkbox to show -->
   <div class="recaptcha-note">
     Protected by reCAPTCHA v3
   </div>
 
-  <!-- ========== POPUP MODAL for Results ========== -->
-  <div id="result-modal">
-    <div id="modal-content">
-      <h2 id="modal-title"></h2>
-      <div id="modal-text"></div>
-      <button id="close-modal">Close</button>
-    </div>
-  </div>
-
-  <!-- ========== Confetti (minimal inline version) ========== -->
   <script>
-    // Minimal inline version of "canvas-confetti":
-    function confettiEffect() {
-      const count = 200;
-      function fire(particleRatio) {
-        const total = count * particleRatio;
-        for (let i = 0; i < total; i++) {
-          const particle = document.createElement('div');
-          particle.innerHTML = '🎉';
-          particle.style.position = 'fixed';
-          particle.style.zIndex = '9999';
-          particle.style.fontSize = '1.5rem';
-          particle.style.left = Math.random() * 100 + '%';
-          particle.style.top = Math.random() * 100 + '%';
-          document.body.appendChild(particle);
-          // Remove after 1s
-          setTimeout(() => particle.remove(), 1000);
-        }
-      }
-      fire(0.25);
-      fire(0.2);
-      fire(0.35);
-      fire(0.1);
-      fire(0.1);
-    }
-  </script>
-
-  <script>
-    // ==================================
-    // 1) Rate Limiting (Client-Side)
-    // ==================================
+    // ===============================================
+    // =========== 1. Rate Limiting (Client) =========
+    // ===============================================
     function checkRateLimit() {
       const rateLimitData = localStorage.getItem('uploadAttempts');
       const today = new Date().toDateString(); // e.g., "Thu Jan 9 2025"
@@ -254,165 +180,88 @@
       localStorage.setItem('uploadAttempts', JSON.stringify(attemptsObj));
     }
 
-    // ==================================
-    // 2) reCAPTCHA v3
-    // ==================================
+    // ===============================================
+    // =========== 2. reCAPTCHA v3 Handling ==========
+    // ===============================================
+    // We'll dynamically request a token each time user clicks "Process Recording".
+    // That token can then be sent along with the file for server-side verification.
     function getRecaptchaToken() {
       return new Promise((resolve, reject) => {
         if (!window.grecaptcha) {
           reject(new Error('reCAPTCHA not loaded'));
           return;
         }
+        // The action can be any string, e.g., "upload"
         grecaptcha.ready(() => {
           grecaptcha.execute('6LeCZbMqAAAAACTPAVLrS-NQtNWat69AfwVZqG__', { action: 'upload' })
-            .then(token => resolve(token))
-            .catch(err => reject(err));
+            .then((token) => resolve(token))
+            .catch((err) => reject(err));
         });
       });
     }
 
-    // ==================================
-    // 3) Popup Modal & Confetti
-    // ==================================
-    function showModal(disposition, callNotes) {
-      const modal = document.getElementById('result-modal');
-      modal.style.display = 'block';
-      document.getElementById('modal-title').textContent = 'Auto QC Completed!';
-      document.getElementById('modal-text').innerHTML = `
-        <strong>Disposition:</strong> ${disposition}<br/><br/>
-        <strong>Call Notes:</strong> ${callNotes}
-      `;
-      // Trigger confetti
-      confettiEffect();
-    }
-
-    function hideModal() {
-      document.getElementById('result-modal').style.display = 'none';
-    }
-
-    document.getElementById('close-modal').addEventListener('click', hideModal);
-
-    // ==================================
-    // 4) 10-Minute Timeout Upload
-    // ==================================
-    function uploadWithTimeout(formData) {
-      return new Promise(async (resolve, reject) => {
-        const controller = new AbortController();
-        const signal = controller.signal;
-
-        // 10-minute timer
-        const timeout = setTimeout(() => {
-          controller.abort();
-        }, 600000); // 10 min in ms
-
-        try {
-          const response = await fetch('https://universal-method.app.n8n.cloud/webhook-test/site-demo', {
-            method: 'POST',
-            body: formData,
-            signal
-          });
-          clearTimeout(timeout); // no timeout occurred
-
-          if (!response.ok) {
-            throw new Error(`Server returned ${response.status} - ${response.statusText}`);
-          }
-
-          const data = await response.json();
-          resolve(data);
-        } catch (err) {
-          if (err.name === 'AbortError') {
-            reject(new Error('Request timed out after 10 minutes.'));
-          } else {
-            reject(err);
-          }
-        }
-      });
-    }
-
-    // ==================================
-    // 5) Main Upload Handler
-    // ==================================
+    // ===============================================
+    // =========== 3. File Upload + POST =============
+    // ===============================================
     document.getElementById('process-button').addEventListener('click', async () => {
       const fileInput = document.getElementById('file-upload');
       const outputArea = document.getElementById('output-area');
-      outputArea.innerHTML = ''; // Clear any existing messages
+      outputArea.innerHTML = ''; // Clear existing messages
 
-      // 1) Rate limit check
+      // 1) Check Rate Limit
       const attemptsObj = checkRateLimit();
       if (attemptsObj.attempts >= 3) {
         outputArea.innerHTML = '<p class="error">You have reached the 3-uploads-per-day limit.</p>';
         return;
       }
 
-      // 2) Make sure a file is selected
+      // 2) Check if a file is selected
       if (!fileInput.files.length) {
         outputArea.innerHTML = '<p class="error">Please upload a file first!</p>';
         return;
       }
-      const file = fileInput.files[0];
 
-      // 3) Check file size (<= 200 MB)
-      if (file.size > 200 * 1024 * 1024) {
-        outputArea.innerHTML = '<p class="error">File size exceeds 200MB limit.</p>';
+      // 3) Request a reCAPTCHA v3 token
+      outputArea.innerHTML = '<p>Verifying reCAPTCHA. Please wait...</p>';
+      let recaptchaToken;
+      try {
+        recaptchaToken = await getRecaptchaToken();
+      } catch (err) {
+        outputArea.innerHTML = `<p class="error">reCAPTCHA Error: ${err.message}</p>`;
         return;
       }
 
-      // 4) Check audio duration (<= 1 hour)
-      outputArea.innerHTML = '<p>Checking file duration...</p>';
-      const audioEl = document.createElement('audio');
-      audioEl.src = URL.createObjectURL(file);
+      // 4) Now that we have a token, proceed with file upload
+      outputArea.innerHTML = '<p>Processing your file...</p>';
 
-      audioEl.addEventListener('loadedmetadata', async () => {
-        if (audioEl.duration > 3600) {
-          outputArea.innerHTML = '<p class="error">Audio exceeds 1 hour limit.</p>';
-          return;
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      // Attach the v3 token, so the server can verify it
+      formData.append('recaptchaToken', recaptchaToken);
+
+      try {
+        const response = await fetch('https://universal-method.app.n8n.cloud/webhook/site-demo', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status} - ${response.statusText}`);
         }
 
-        // 5) reCAPTCHA
-        outputArea.innerHTML = '<p>Verifying reCAPTCHA. Please wait...</p>';
-        let recaptchaToken;
-        try {
-          recaptchaToken = await getRecaptchaToken();
-        } catch (err) {
-          outputArea.innerHTML = `<p class="error">reCAPTCHA Error: ${err.message}</p>`;
-          return;
-        }
+        const data = await response.json();
 
-        // 6) Prepare data and upload
-        outputArea.innerHTML = '<p>Uploading your file...</p>';
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('recaptchaToken', recaptchaToken);
+        // Increment the local rate limit count
+        incrementRateLimit(attemptsObj);
 
-        try {
-          // 7) Upload with 10-min timeout
-          const data = await uploadWithTimeout(formData);
-
-          // 8) Rate limit count up
-          incrementRateLimit(attemptsObj);
-
-          // Check the response
-          // Must be: [ { "Dispo Name": "...", "Call Notes": "..." } ]
-          if (Array.isArray(data) && data.length > 0) {
-            const { ['Dispo Name']: disposition, ['Call Notes']: callNotes } = data[0];
-
-            // Clear the output area
-            outputArea.innerHTML = '<p class="success">Auto QC Completed!</p>';
-            // Show the modal (Disposition/Call Notes) + confetti
-            showModal(disposition, callNotes);
-
-          } else {
-            // Unexpected format
-            outputArea.innerHTML = '<p class="error">Error: Unexpected server response format.</p>';
-          }
-        } catch (error) {
-          outputArea.innerHTML = `<p class="error">Error: ${error.message}</p>`;
-        }
-      });
-
-      audioEl.addEventListener('error', () => {
-        outputArea.innerHTML = '<p class="error">Failed to read audio metadata. Please ensure it’s a valid audio file.</p>';
-      });
+        // Show success message
+        outputArea.innerHTML = `
+          <p class="success">File successfully uploaded!</p>
+          <p>Server Response: ${JSON.stringify(data)}</p>
+        `;
+      } catch (error) {
+        outputArea.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+      }
     });
   </script>
 </body>
