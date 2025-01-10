@@ -112,17 +112,17 @@
     /* ===== Modal Styles ===== */
     #result-modal {
       display: none; /* hidden by default */
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      width: 100%; 
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
       height: 100%;
       background: rgba(0, 0, 0, 0.5);
       z-index: 9998;
     }
     #modal-content {
       position: absolute;
-      top: 50%; 
+      top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       background: #fff;
@@ -159,12 +159,12 @@
 </head>
 <body>
   <header>
-    <h1>Auto QC AI Demo</h1>
+    <h1>AI QC Demo Lander</h1>
     <p>Experience the power of AI-driven call quality control!</p>
   </header>
 
   <section>
-    <h2>Live Demo</h2>
+    <h2>DIY Demo</h2>
     <div class="demo-section">
       <h3>Upload Your Call Recording</h3>
       <div class="upload-area">
@@ -173,7 +173,7 @@
 
       <!-- The button that triggers the processing -->
       <button id="process-button">Process Recording</button>
-      
+
       <div class="output" id="output-area">
         <p>Upload a file to see the results!</p>
       </div>
@@ -306,7 +306,7 @@
         }, 600000); // 10 min in ms
 
         try {
-          const response = await fetch('https://universal-method.app.n8n.cloud/webhook/site-demo', {
+          const response = await fetch('https://universal-method.app.n8n.cloud/webhook-test/site-demo', {
             method: 'POST',
             body: formData,
             signal
@@ -317,7 +317,6 @@
             throw new Error(`Server returned ${response.status} - ${response.statusText}`);
           }
 
-          // Attempt to parse JSON
           const data = await response.json();
           resolve(data);
         } catch (err) {
@@ -336,7 +335,7 @@
     document.getElementById('process-button').addEventListener('click', async () => {
       const fileInput = document.getElementById('file-upload');
       const outputArea = document.getElementById('output-area');
-      outputArea.innerHTML = ''; // Clear messages
+      outputArea.innerHTML = ''; // Clear any existing messages
 
       // 1) Rate limit check
       const attemptsObj = checkRateLimit();
@@ -345,32 +344,31 @@
         return;
       }
 
-      // 2) Validate file selected
+      // 2) Make sure a file is selected
       if (!fileInput.files.length) {
         outputArea.innerHTML = '<p class="error">Please upload a file first!</p>';
         return;
       }
       const file = fileInput.files[0];
 
-      // 3) File size check (200MB)
+      // 3) Check file size (<= 200 MB)
       if (file.size > 200 * 1024 * 1024) {
         outputArea.innerHTML = '<p class="error">File size exceeds 200MB limit.</p>';
         return;
       }
 
-      // 4) Check audio duration (<= 1 hour) 
+      // 4) Check audio duration (<= 1 hour)
+      outputArea.innerHTML = '<p>Checking file duration...</p>';
       const audioEl = document.createElement('audio');
       audioEl.src = URL.createObjectURL(file);
 
-      outputArea.innerHTML = '<p>Checking file duration...</p>';
-
       audioEl.addEventListener('loadedmetadata', async () => {
-        if (audioEl.duration > 3600) { // 1 hour in seconds
+        if (audioEl.duration > 3600) {
           outputArea.innerHTML = '<p class="error">Audio exceeds 1 hour limit.</p>';
           return;
         }
 
-        // 5) reCAPTCHA token
+        // 5) reCAPTCHA
         outputArea.innerHTML = '<p>Verifying reCAPTCHA. Please wait...</p>';
         let recaptchaToken;
         try {
@@ -380,41 +378,38 @@
           return;
         }
 
-        // 6) Prepare data for upload
+        // 6) Prepare data and upload
         outputArea.innerHTML = '<p>Uploading your file...</p>';
         const formData = new FormData();
         formData.append('file', file);
         formData.append('recaptchaToken', recaptchaToken);
 
-        // 7) Attempt upload with 10-min timeout
         try {
+          // 7) Upload with 10-min timeout
           const data = await uploadWithTimeout(formData);
 
-          // Increment local rate limit
+          // 8) Rate limit count up
           incrementRateLimit(attemptsObj);
 
-          // Check the structure:
-          // e.g. data = [ { "Dispo Name": "Good Call / No Close", "Call Notes": "..." } ]
+          // Check the response
+          // Must be: [ { "Dispo Name": "...", "Call Notes": "..." } ]
           if (Array.isArray(data) && data.length > 0) {
             const { ['Dispo Name']: disposition, ['Call Notes']: callNotes } = data[0];
 
             // Clear the output area
             outputArea.innerHTML = '<p class="success">Auto QC Completed!</p>';
-            // Show modal + confetti
+            // Show the modal (Disposition/Call Notes) + confetti
             showModal(disposition, callNotes);
 
           } else {
-            // Unexpected data format
-            outputArea.innerHTML = `
-              <p class="error">Error: Unexpected server response format.</p>
-            `;
+            // Unexpected format
+            outputArea.innerHTML = '<p class="error">Error: Unexpected server response format.</p>';
           }
         } catch (error) {
           outputArea.innerHTML = `<p class="error">Error: ${error.message}</p>`;
         }
       });
 
-      // If audio metadata fails to load
       audioEl.addEventListener('error', () => {
         outputArea.innerHTML = '<p class="error">Failed to read audio metadata. Please ensure it’s a valid audio file.</p>';
       });
