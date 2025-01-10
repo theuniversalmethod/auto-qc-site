@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI QC Demo</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI QC Demo with Rate Limit + reCAPTCHA</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       text-align: center;
       background-color: #f8f9fa;
       color: #343a40;
@@ -18,27 +17,18 @@
       color: #ffffff;
       padding: 1rem 0;
     }
-    header h1 {
-      margin: 0;
-    }
-    section {
-      padding: 2rem;
-    }
+    header h1 { margin: 0; }
+    section { padding: 2rem; }
     .demo-section {
       border: 2px dashed #6c757d;
       border-radius: 10px;
       padding: 1.5rem;
       margin: 2rem auto;
-      width: 80%;
-      max-width: 600px;
+      width: 80%; max-width: 600px;
       background-color: #ffffff;
     }
-    .upload-area {
-      margin: 1rem 0;
-    }
-    input[type="file"] {
-      margin: 1rem 0;
-    }
+    .upload-area { margin: 1rem 0; }
+    input[type="file"] { margin: 1rem 0; }
     button {
       background-color: #28a745;
       color: #ffffff;
@@ -48,14 +38,16 @@
       cursor: pointer;
       font-size: 1rem;
     }
-    button:hover {
-      background-color: #218838;
-    }
+    button:hover { background-color: #218838; }
     .output {
       margin-top: 1rem;
       font-weight: bold;
     }
+    .error { color: red; }
+    .success { color: green; }
   </style>
+  <!-- Include Google reCAPTCHA v2 script -->
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
   <header>
@@ -70,7 +62,17 @@
       <div class="upload-area">
         <input type="file" id="file-upload" accept="audio/*">
       </div>
+
+      <!-- Google reCAPTCHA widget -->
+      <div 
+        class="g-recaptcha" 
+        data-sitekey="YOUR_RECAPTCHA_SITE_KEY"
+        data-callback="onCaptchaSuccess">
+      </div>
+      
+      <!-- The button that triggers the processing -->
       <button id="process-button">Process Recording</button>
+      
       <div class="output" id="output-area">
         <p>Upload a file to see the results!</p>
       </div>
@@ -83,25 +85,112 @@
   </section>
 
   <script>
-    document.getElementById('process-button').addEventListener('click', () => {
+    // =====================================================
+    // ========== 1. Rate Limiting (Client-Side) ===========
+    // =====================================================
+    function checkRateLimit() {
+      // Get existing data from localStorage
+      const rateLimitData = localStorage.getItem('uploadAttempts');
+      const today = new Date().toDateString(); // e.g., "Thu Jan 9 2025"
+
+      let attemptsObj = {
+        date: today,
+        attempts: 0
+      };
+
+      // If we have something stored
+      if (rateLimitData) {
+        const parsedData = JSON.parse(rateLimitData);
+
+        // Check if it's for the same day
+        if (parsedData.date === today) {
+          attemptsObj = parsedData;
+        }
+      }
+
+      // Return the current attempts object
+      return attemptsObj;
+    }
+
+    function incrementRateLimit(attemptsObj) {
+      // Update attempts
+      attemptsObj.attempts += 1;
+      // Store it back in localStorage
+      localStorage.setItem('uploadAttempts', JSON.stringify(attemptsObj));
+    }
+
+    // =====================================================
+    // ========== 2. Google reCAPTCHA Handling =============
+    // =====================================================
+    let captchaVerified = false;
+
+    // This function is called automatically by reCAPTCHA when
+    // the user successfully completes the captcha.
+    function onCaptchaSuccess() {
+      captchaVerified = true;
+    }
+
+    // =====================================================
+    // ========== 3. File Upload + POST to Endpoint ========
+    // =====================================================
+    document.getElementById('process-button').addEventListener('click', async () => {
       const fileInput = document.getElementById('file-upload');
       const outputArea = document.getElementById('output-area');
+      outputArea.innerHTML = ''; // Clear existing messages
 
-      if (fileInput.files.length === 0) {
-        outputArea.innerHTML = '<p style="color: red;">Please upload a file first!</p>';
+      // ----- Check Rate Limit (Client-Side) -----
+      const attemptsObj = checkRateLimit();
+      if (attemptsObj.attempts >= 3) {
+        outputArea.innerHTML = '<p class="error">You have reached the 3-uploads-per-day limit.</p>';
         return;
       }
 
+      // ----- Check if a file is selected -----
+      if (!fileInput.files.length) {
+        outputArea.innerHTML = '<p class="error">Please upload a file first!</p>';
+        return;
+      }
+
+      // ----- Check if reCAPTCHA is completed -----
+      if (!captchaVerified) {
+        outputArea.innerHTML = '<p class="error">Please complete the reCAPTCHA!</p>';
+        return;
+      }
+
+      // If everything is good, show a "processing" message
       outputArea.innerHTML = '<p>Processing your file...</p>';
 
-      // Simulating API call for now
-      setTimeout(() => {
+      // Create FormData and append the selected file
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      try {
+        // Make the POST request with the form data
+        const response = await fetch('https://universal-method.app.n8n.cloud/webhook-test/site-demo', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          // If the server returned a status outside of the 200–299 range
+          throw new Error(`Server returned ${response.status} - ${response.statusText}`);
+        }
+
+        // Attempt to parse the response as JSON
+        const data = await response.json();
+
+        // Increment the local rate limit count
+        incrementRateLimit(attemptsObj);
+
+        // Show some success message or data from the server
         outputArea.innerHTML = `
-          <p>Call Disposition: <strong>Positive</strong></p>
-          <p>Call Notes: <strong>Customer expressed interest in the product.</strong></p>
-          <p style="color: green;">🎉 Demo complete! 🎉</p>
+          <p class="success">File successfully uploaded!</p>
+          <p>Server Response: ${JSON.stringify(data)}</p>
         `;
-      }, 2000);
+      } catch (error) {
+        // Handle errors (e.g., network errors, JSON parse errors)
+        outputArea.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+      }
     });
   </script>
 </body>
