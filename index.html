@@ -163,7 +163,6 @@
     <h2>Integrations</h2>
     <p>Easily integrate with platforms like TrackDrive, Retreaver, and more!</p>
   </section>
-  <!-- A note for reCAPTCHA v3 -->
   <div class="recaptcha-note">
     Protected by reCAPTCHA v3
   </div>
@@ -268,25 +267,20 @@
         if (err.name === 'AbortError') {
           throw new Error('Request timed out after 10 minutes.');
         } else {
-          // Return null to indicate failure
           return null;
         }
       }
     }
-    // Polling Function that uses jobId in the request body
+    // Polling Function using GET to the correct polling URL.
     async function pollForResult(jobId, pollInterval = 10000) {
       const poll = async () => {
         try {
           const controller = new AbortController();
           const signal = controller.signal;
           const pollTimeout = setTimeout(() => { controller.abort(); }, 10000);
-          // POST polling request with jobId in JSON body
-          const response = await fetch('https://universal-method.app.n8n.cloud/webhook/site-demo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ jobId: jobId }),
-            signal
-          });
+          // Append jobId as a query parameter (e.g., ?jobId=XYZ)
+          const pollingUrl = `https://universal-method.app.n8n.cloud/webhook-test/auto-qc-jobs?jobId=${encodeURIComponent(jobId)}`;
+          const response = await fetch(pollingUrl, { method: 'GET', signal });
           clearTimeout(pollTimeout);
           if (response.ok) {
             const data = await response.json();
@@ -297,9 +291,8 @@
             }
           }
         } catch (err) {
-          // Ignore errors; continue polling
+          // Ignore errors and continue polling
         }
-        // Wait for pollInterval and try again
         return new Promise(resolve => setTimeout(() => resolve(poll()), pollInterval));
       };
       return poll();
@@ -308,25 +301,21 @@
     document.getElementById('process-button').addEventListener('click', async () => {
       const fileInput = document.getElementById('file-upload');
       const outputArea = document.getElementById('output-area');
-      outputArea.innerHTML = ''; // Clear existing messages
-      // Rate limit check
+      outputArea.innerHTML = '';
       const attemptsObj = checkRateLimit();
       if (attemptsObj.attempts >= 3) {
         outputArea.innerHTML = '<p class="error">You have reached the 3-uploads-per-day limit.</p>';
         return;
       }
-      // Make sure a file is selected
       if (!fileInput.files.length) {
         outputArea.innerHTML = '<p class="error">Please upload a file first!</p>';
         return;
       }
       const file = fileInput.files[0];
-      // Check file size (<= 200 MB)
       if (file.size > 200 * 1024 * 1024) {
         outputArea.innerHTML = '<p class="error">File size exceeds 200MB limit.</p>';
         return;
       }
-      // Check audio duration (<= 1 hour)
       outputArea.innerHTML = '<p>Checking file duration...</p>';
       const audioEl = document.createElement('audio');
       audioEl.src = URL.createObjectURL(file);
@@ -335,7 +324,6 @@
           outputArea.innerHTML = '<p class="error">Audio exceeds 1 hour limit.</p>';
           return;
         }
-        // reCAPTCHA
         outputArea.innerHTML = '<p>Verifying reCAPTCHA. Please wait...</p>';
         let recaptchaToken;
         try {
@@ -344,26 +332,21 @@
           outputArea.innerHTML = `<p class="error">reCAPTCHA Error: ${err.message}</p>`;
           return;
         }
-        // Prepare data and upload
         outputArea.innerHTML = '<p>Uploading your file...</p>';
         const formData = new FormData();
         formData.append('file', file);
         formData.append('recaptchaToken', recaptchaToken);
         try {
-          // Upload with 10-min timeout
           const responseData = await uploadWithTimeout(formData);
-          // Increase rate limit count
           incrementRateLimit(attemptsObj);
-          // Check if the response contains a valid jobId
+          // Check if the response contains a valid jobId; otherwise, show an error.
           if (!responseData || responseData.error || !responseData.jobId) {
             outputArea.innerHTML = `<p class="error">Error: ${responseData ? responseData.error || "Invalid server response" : "No response from server"}</p>`;
             return;
           }
-          // If valid, store the jobId and start polling
           const jobId = responseData.jobId;
           outputArea.innerHTML = '<p>Processing... Polling for result every 10 seconds.</p>';
           const validData = await pollForResult(jobId);
-          // Process valid response
           if (Array.isArray(validData)) {
             const { ['Dispo Name']: disposition, ['Call Notes']: callNotes } = validData[0];
             outputArea.innerHTML = '<p class="success">Auto QC Completed!</p>';
@@ -387,3 +370,4 @@
   </script>
 </body>
 </html>
+
