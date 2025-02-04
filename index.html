@@ -92,7 +92,7 @@
       color: #6c757d;
       font-style: italic;
     }
-    /* ===== Modal Styles ===== */
+    /* Modal Styles */
     #result-modal {
       display: none;
       position: fixed;
@@ -166,7 +166,7 @@
   <div class="recaptcha-note">
     Protected by reCAPTCHA v3
   </div>
-  <!-- ===== Popup Modal for Results ===== -->
+  <!-- Popup Modal for Results -->
   <div id="result-modal">
     <div id="modal-content">
       <h2 id="modal-title"></h2>
@@ -174,7 +174,7 @@
       <button id="close-modal">Close</button>
     </div>
   </div>
-  <!-- ===== Confetti (minimal inline version) ===== -->
+  <!-- Confetti (minimal inline version) -->
   <script>
     function confettiEffect() {
       const count = 200;
@@ -238,12 +238,12 @@
     // ==================================
     // 3) Popup Modal & Confetti
     // ==================================
-    function showModal(disposition, callNotes) {
+    function showModal(dispo, callNotes) {
       const modal = document.getElementById('result-modal');
       modal.style.display = 'block';
       document.getElementById('modal-title').textContent = 'Auto QC Completed!';
       document.getElementById('modal-text').innerHTML = `
-        <strong>Disposition:</strong> ${disposition}<br/><br/>
+        <strong>Disposition:</strong> ${dispo}<br/><br/>
         <strong>Call Notes:</strong> ${callNotes}
       `;
       confettiEffect();
@@ -280,31 +280,44 @@
       }
     }
     // ==================================
-    // 5) Polling Function (GET from correct polling URL)
+    // 5) Polling Function (GET from polling URL with jobId)
     // ==================================
     async function pollForResult(jobId, pollInterval = 10000) {
-      const poll = async () => {
+      // Record the polling start time
+      const startTime = new Date().getTime();
+      async function poll() {
+        // Check if polling has exceeded 10 minutes
+        const now = new Date().getTime();
+        if (now - startTime > 600000) { // 600,000 ms = 10 minutes
+          throw new Error("We're currently experiencing a large number of requests, please try again in ten minutes.");
+        }
         try {
           const controller = new AbortController();
           const signal = controller.signal;
           const pollTimeout = setTimeout(() => { controller.abort(); }, 10000);
-          // Use the polling URL and append jobId as a query parameter.
-          const pollingUrl = `https://universal-method.app.n8n.cloud/webhook/auto-qc-jobs?jobId=${encodeURIComponent(jobId)}`;
+          // Build polling URL with jobId as query parameter
+          const pollingUrl = `https://universal-method.app.n8n.cloud/webhook-test/auto-qc-jobs?jobId=${encodeURIComponent(jobId)}`;
           const response = await fetch(pollingUrl, { method: 'GET', signal });
           clearTimeout(pollTimeout);
           if (response.ok) {
             const data = await response.json();
-            // Check if the response contains the expected keys.
-            if ((Array.isArray(data) && data.length > 0 && data[0]['Dispo Name'] && data[0]['Call Notes']) ||
-                (data && data['Dispo Name'] && data['Call Notes'])) {
+            // Expected JSON body structure:
+            // { jobId, status, dispo, callNotes, errorReason }
+            if (data.status === "running") {
+              // Continue polling
+              return new Promise(resolve => setTimeout(() => resolve(poll()), pollInterval));
+            } else if (data.status === "completed") {
+              // Processing is done; return the data
               return data;
+            } else if (data.status === "error") {
+              throw new Error(data.errorReason || "An error occurred during processing.");
             }
           }
         } catch (err) {
-          // Ignore errors and continue polling.
+          // In case of error (e.g. network), wait and try again.
         }
         return new Promise(resolve => setTimeout(() => resolve(poll()), pollInterval));
-      };
+      }
       return poll();
     }
     // ==================================
@@ -313,7 +326,7 @@
     document.getElementById('process-button').addEventListener('click', async () => {
       const fileInput = document.getElementById('file-upload');
       const outputArea = document.getElementById('output-area');
-      outputArea.innerHTML = ''; // Clear existing messages
+      outputArea.innerHTML = ''; // Clear any existing messages
       // 1) Rate limit check
       const attemptsObj = checkRateLimit();
       if (attemptsObj.attempts >= 3) {
@@ -349,37 +362,30 @@
           outputArea.innerHTML = `<p class="error">reCAPTCHA Error: ${err.message}</p>`;
           return;
         }
-        // 6) Prepare data and upload
-        outputArea.innerHTML = '<p>Uploading your file...</p>';
+        // 6) Prepare data and initiate processing via POST
+        outputArea.innerHTML = '<p>Processing...</p>';
         const formData = new FormData();
         formData.append('file', file);
         formData.append('recaptchaToken', recaptchaToken);
         try {
-          // 7) Initiate processing by POSTing to the site-demo endpoint
           const responseData = await uploadWithTimeout(formData);
-          // Increase rate limit count
+          // 7) Increase rate limit count
           incrementRateLimit(attemptsObj);
-          // 8) Validate response: it must contain a valid jobId and no error.
+          // 8) Validate initial response: it must contain a valid jobId
           if (!responseData || responseData.error || !responseData.jobId) {
             outputArea.innerHTML = `<p class="error">Error: ${responseData ? responseData.error || "Invalid server response" : "No response from server"}</p>`;
             return;
           }
           const jobId = responseData.jobId;
-          outputArea.innerHTML = '<p>Processing... Polling for result every 10 seconds.</p>';
-          // 9) Poll for result using the jobId
+          // 9) Start polling using the jobId
+          outputArea.innerHTML = '<p>Processing...</p>';
           const validData = await pollForResult(jobId);
-          // 10) Process the valid response and display results
-          if (Array.isArray(validData)) {
-            const { ['Dispo Name']: disposition, ['Call Notes']: callNotes } = validData[0];
+          // 10) Process the valid response based on status
+          if (validData.status === "completed") {
+            const disposition = validData.dispo;
+            const callNotes = validData.callNotes;
             outputArea.innerHTML = '<p class="success">Auto QC Completed!</p>';
             showModal(disposition, callNotes);
-          } else if (validData && validData['Dispo Name'] && validData['Call Notes']) {
-            const disposition = validData['Dispo Name'];
-            const callNotes = validData['Call Notes'];
-            outputArea.innerHTML = '<p class="success">Auto QC Completed!</p>';
-            showModal(disposition, callNotes);
-          } else {
-            outputArea.innerHTML = '<p class="error">Error: Unexpected server response format.</p>';
           }
         } catch (error) {
           outputArea.innerHTML = `<p class="error">Error: ${error.message}</p>`;
