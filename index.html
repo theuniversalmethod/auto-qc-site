@@ -296,7 +296,7 @@
           const signal = controller.signal;
           const pollTimeout = setTimeout(() => { controller.abort(); }, 10000);
           // Build polling URL with jobId as query parameter
-          const pollingUrl = `https://universal-method.app.n8n.cloud/webhook-test/auto-qc-jobs?jobId=${encodeURIComponent(jobId)}`;
+          const pollingUrl = `https://universal-method.app.n8n.cloud/webhook/auto-qc-jobs?jobId=${encodeURIComponent(jobId)}`;
           const response = await fetch(pollingUrl, { method: 'GET', signal });
           clearTimeout(pollTimeout);
           if (response.ok) {
