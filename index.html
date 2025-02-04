@@ -92,7 +92,7 @@
       color: #6c757d;
       font-style: italic;
     }
-    /* Modal Styles */
+    /* ===== Modal Styles ===== */
     #result-modal {
       display: none;
       position: fixed;
@@ -166,7 +166,7 @@
   <div class="recaptcha-note">
     Protected by reCAPTCHA v3
   </div>
-  <!-- Popup Modal for Results -->
+  <!-- ===== Popup Modal for Results ===== -->
   <div id="result-modal">
     <div id="modal-content">
       <h2 id="modal-title"></h2>
@@ -174,7 +174,7 @@
       <button id="close-modal">Close</button>
     </div>
   </div>
-  <!-- Confetti (minimal inline version) -->
+  <!-- ===== Confetti (minimal inline version) ===== -->
   <script>
     function confettiEffect() {
       const count = 200;
@@ -200,7 +200,9 @@
     }
   </script>
   <script>
-    // Rate Limiting (Client-Side)
+    // ==================================
+    // 1) Rate Limiting (Client-Side)
+    // ==================================
     function checkRateLimit() {
       const rateLimitData = localStorage.getItem('uploadAttempts');
       const today = new Date().toDateString();
@@ -217,7 +219,9 @@
       attemptsObj.attempts += 1;
       localStorage.setItem('uploadAttempts', JSON.stringify(attemptsObj));
     }
-    // reCAPTCHA v3
+    // ==================================
+    // 2) reCAPTCHA v3
+    // ==================================
     function getRecaptchaToken() {
       return new Promise((resolve, reject) => {
         if (!window.grecaptcha) {
@@ -231,7 +235,9 @@
         });
       });
     }
-    // Popup Modal & Confetti
+    // ==================================
+    // 3) Popup Modal & Confetti
+    // ==================================
     function showModal(disposition, callNotes) {
       const modal = document.getElementById('result-modal');
       modal.style.display = 'block';
@@ -246,7 +252,9 @@
       document.getElementById('result-modal').style.display = 'none';
     }
     document.getElementById('close-modal').addEventListener('click', hideModal);
-    // Upload with 10-Minute Timeout (POST to site-demo)
+    // ==================================
+    // 4) Upload with 10-Minute Timeout (POST to initiate processing)
+    // ==================================
     async function uploadWithTimeout(formData) {
       const controller = new AbortController();
       const signal = controller.signal;
@@ -271,51 +279,59 @@
         }
       }
     }
-    // Polling Function using GET to the correct polling URL.
+    // ==================================
+    // 5) Polling Function (GET from correct polling URL)
+    // ==================================
     async function pollForResult(jobId, pollInterval = 10000) {
       const poll = async () => {
         try {
           const controller = new AbortController();
           const signal = controller.signal;
           const pollTimeout = setTimeout(() => { controller.abort(); }, 10000);
-          // Append jobId as a query parameter (e.g., ?jobId=XYZ)
+          // Use the polling URL and append jobId as a query parameter.
           const pollingUrl = `https://universal-method.app.n8n.cloud/webhook-test/auto-qc-jobs?jobId=${encodeURIComponent(jobId)}`;
           const response = await fetch(pollingUrl, { method: 'GET', signal });
           clearTimeout(pollTimeout);
           if (response.ok) {
             const data = await response.json();
-            // Check if data contains the expected keys
+            // Check if the response contains the expected keys.
             if ((Array.isArray(data) && data.length > 0 && data[0]['Dispo Name'] && data[0]['Call Notes']) ||
                 (data && data['Dispo Name'] && data['Call Notes'])) {
               return data;
             }
           }
         } catch (err) {
-          // Ignore errors and continue polling
+          // Ignore errors and continue polling.
         }
         return new Promise(resolve => setTimeout(() => resolve(poll()), pollInterval));
       };
       return poll();
     }
-    // Main Upload Handler with Polling and Job ID handling
+    // ==================================
+    // 6) Main Upload Handler with Polling and Job ID Handling
+    // ==================================
     document.getElementById('process-button').addEventListener('click', async () => {
       const fileInput = document.getElementById('file-upload');
       const outputArea = document.getElementById('output-area');
-      outputArea.innerHTML = '';
+      outputArea.innerHTML = ''; // Clear existing messages
+      // 1) Rate limit check
       const attemptsObj = checkRateLimit();
       if (attemptsObj.attempts >= 3) {
         outputArea.innerHTML = '<p class="error">You have reached the 3-uploads-per-day limit.</p>';
         return;
       }
+      // 2) Make sure a file is selected
       if (!fileInput.files.length) {
         outputArea.innerHTML = '<p class="error">Please upload a file first!</p>';
         return;
       }
       const file = fileInput.files[0];
+      // 3) Check file size (<= 200 MB)
       if (file.size > 200 * 1024 * 1024) {
         outputArea.innerHTML = '<p class="error">File size exceeds 200MB limit.</p>';
         return;
       }
+      // 4) Check audio duration (<= 1 hour)
       outputArea.innerHTML = '<p>Checking file duration...</p>';
       const audioEl = document.createElement('audio');
       audioEl.src = URL.createObjectURL(file);
@@ -324,6 +340,7 @@
           outputArea.innerHTML = '<p class="error">Audio exceeds 1 hour limit.</p>';
           return;
         }
+        // 5) reCAPTCHA
         outputArea.innerHTML = '<p>Verifying reCAPTCHA. Please wait...</p>';
         let recaptchaToken;
         try {
@@ -332,21 +349,26 @@
           outputArea.innerHTML = `<p class="error">reCAPTCHA Error: ${err.message}</p>`;
           return;
         }
+        // 6) Prepare data and upload
         outputArea.innerHTML = '<p>Uploading your file...</p>';
         const formData = new FormData();
         formData.append('file', file);
         formData.append('recaptchaToken', recaptchaToken);
         try {
+          // 7) Initiate processing by POSTing to the site-demo endpoint
           const responseData = await uploadWithTimeout(formData);
+          // Increase rate limit count
           incrementRateLimit(attemptsObj);
-          // Check if the response contains a valid jobId; otherwise, show an error.
+          // 8) Validate response: it must contain a valid jobId and no error.
           if (!responseData || responseData.error || !responseData.jobId) {
             outputArea.innerHTML = `<p class="error">Error: ${responseData ? responseData.error || "Invalid server response" : "No response from server"}</p>`;
             return;
           }
           const jobId = responseData.jobId;
           outputArea.innerHTML = '<p>Processing... Polling for result every 10 seconds.</p>';
+          // 9) Poll for result using the jobId
           const validData = await pollForResult(jobId);
+          // 10) Process the valid response and display results
           if (Array.isArray(validData)) {
             const { ['Dispo Name']: disposition, ['Call Notes']: callNotes } = validData[0];
             outputArea.innerHTML = '<p class="success">Auto QC Completed!</p>';
@@ -370,4 +392,3 @@
   </script>
 </body>
 </html>
-
