@@ -4,77 +4,93 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>The Universal Method - Auto QC AI Demo</title>
-  <!-- reCAPTCHA v3 script (replace with your actual site key) -->
+  <!-- reCAPTCHA v3 script (keep your site key) -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LeCZbMqAAAAACTPAVLrS-NQtNWat69AfwVZqG__"></script>
   <style>
-    /* Basic reset */
+    /* General Reset */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
+    /* Page Background (using a gradient similar to the login page) */
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f8f9fa;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(to right, #1a73e8, #ff8c00);
       color: #343a40;
-      text-align: center;
+      min-height: 100vh;
+      line-height: 1.5;
     }
+    /* Header styling */
     header {
-      background-color: #343a40;
-      color: #ffffff;
+      text-align: center;
       padding: 2rem 1rem;
-      margin-bottom: 2rem;
+      color: #fff;
     }
     header h1 {
-      font-size: 2rem;
+      font-size: 2.5rem;
       margin-bottom: 0.5rem;
     }
     header p {
       font-size: 1.2rem;
       font-weight: 300;
     }
-    section {
+    /* Container for the demo content */
+    .container {
       max-width: 800px;
-      margin: 0 auto 2rem auto;
+      margin: 2rem auto;
       padding: 0 1rem;
+    }
+    /* Card-style sections for a modern look */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .card h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      color: #1a73e8;
       text-align: center;
     }
-    .demo-section {
-      border: 2px dashed #6c757d;
-      border-radius: 10px;
-      padding: 1.5rem;
-      margin: 2rem auto;
-      max-width: 600px;
-      background-color: #ffffff;
-    }
-    h2 {
-      margin-bottom: 1rem;
-      font-weight: bold;
-      font-size: 1.5rem;
-    }
+    /* Upload area styling */
     .upload-area {
       margin: 1rem 0;
+      text-align: center;
     }
-    input[type="file"] {
-      margin: 1rem 0;
-      font-size: 1rem;
+    .upload-area h3 {
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
     }
-    button {
-      background-color: #28a745;
-      color: #ffffff;
-      border: none;
-      padding: 0.75rem 1.5rem;
+    .upload-area input[type="file"] {
+      border: 1px solid #ccc;
+      padding: 10px;
       border-radius: 5px;
+      width: 100%;
+      max-width: 400px;
       cursor: pointer;
+    }
+    /* Button styling */
+    button {
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 0.75rem 1.5rem;
       font-size: 1rem;
-      transition: background-color 0.2s;
+      cursor: pointer;
+      transition: background 0.3s;
     }
     button:hover {
-      background-color: #218838;
+      background: #1559b5;
     }
+    /* Output text */
     .output {
-      margin-top: 1rem;
+      margin-top: 1.5rem;
       font-weight: bold;
+      text-align: center;
       min-height: 2rem;
     }
     .error {
@@ -85,11 +101,12 @@
       color: green;
       font-weight: 400;
     }
+    /* reCAPTCHA note styling */
     .recaptcha-note {
       text-align: center;
       margin: 1rem 0;
       font-size: 0.9rem;
-      color: #6c757d;
+      color: #f8f9fa;
       font-style: italic;
     }
     /* Modal Styles */
@@ -113,13 +130,14 @@
       padding: 2rem;
       text-align: center;
       max-width: 400px;
-      width: 80%;
+      width: 90%;
       box-shadow: 0 2px 10px rgba(0,0,0,0.3);
       z-index: 9999;
     }
     #modal-title {
       font-size: 1.5rem;
       margin-bottom: 1rem;
+      color: #1a73e8;
     }
     #modal-text {
       font-size: 1rem;
@@ -127,8 +145,8 @@
       line-height: 1.5;
     }
     #close-modal {
-      background-color: #007bff;
-      color: #ffffff;
+      background: #1a73e8;
+      color: #fff;
       border: none;
       padding: 0.5rem 1rem;
       border-radius: 4px;
@@ -136,7 +154,7 @@
       font-size: 1rem;
     }
     #close-modal:hover {
-      background-color: #0056b3;
+      background: #1559b5;
     }
   </style>
 </head>
@@ -145,27 +163,34 @@
     <h1>Auto QC AI Demo</h1>
     <p>Experience the power of AI-driven call quality control!</p>
   </header>
-  <section>
-    <h2>Live Demo</h2>
-    <div class="demo-section">
-      <h3>Upload Your Call Recording</h3>
+
+  <div class="container">
+    <!-- Demo Card -->
+    <div class="card">
+      <h2>Live Demo</h2>
       <div class="upload-area">
+        <h3>Upload Your Call Recording</h3>
         <input type="file" id="file-upload" accept="audio/*">
       </div>
-      <!-- The button that triggers the processing -->
-      <button id="process-button">Process Recording</button>
+      <div style="text-align: center; margin-top: 1rem;">
+        <button id="process-button">Process Recording</button>
+      </div>
       <div class="output" id="output-area">
         <p>Upload a file to see the results!</p>
       </div>
     </div>
-  </section>
-  <section>
-    <h2>Integrations</h2>
-    <p>Easily integrate with platforms like TrackDrive, Retreaver, and more!</p>
-  </section>
+
+    <!-- Integrations Card -->
+    <div class="card">
+      <h2>Integrations</h2>
+      <p style="text-align: center;">Easily integrate with platforms like TrackDrive, Retreaver, and more!</p>
+    </div>
+  </div>
+
   <div class="recaptcha-note">
     Protected by reCAPTCHA v3
   </div>
+
   <!-- Popup Modal for Results -->
   <div id="result-modal">
     <div id="modal-content">
@@ -174,6 +199,7 @@
       <button id="close-modal">Close</button>
     </div>
   </div>
+
   <!-- Confetti (minimal inline version) -->
   <script>
     function confettiEffect() {
@@ -199,6 +225,7 @@
       fire(0.1);
     }
   </script>
+
   <script>
     // ==================================
     // 1) Rate Limiting (Client-Side)
