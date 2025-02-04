@@ -5,32 +5,156 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>The Universal Method - Auto QC AI Demo</title>
   <!-- reCAPTCHA v3 script (replace with your actual site key) -->
-  <script src="https://www.google.com/recaptcha/api.js?render=6LeCZbMqAAAAACTPAVLrS-NQtNWat69AfwVqG__"></script>
+  <script src="https://www.google.com/recaptcha/api.js?render=6LeCZbMqAAAAACTPAVLrS-NQtNWat69AfwVZqG__"></script>
+
   <style>
-    /* (styles unchanged) */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; background-color: #f8f9fa; color: #343a40; text-align: center; }
-    header { background-color: #343a40; color: #ffffff; padding: 2rem 1rem; margin-bottom: 2rem; }
-    header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
-    header p { font-size: 1.2rem; font-weight: 300; }
-    section { max-width: 800px; margin: 0 auto 2rem auto; padding: 0 1rem; text-align: center; }
-    .demo-section { border: 2px dashed #6c757d; border-radius: 10px; padding: 1.5rem; margin: 2rem auto; max-width: 600px; background-color: #ffffff; }
-    h2 { margin-bottom: 1rem; font-weight: bold; font-size: 1.5rem; }
-    .upload-area { margin: 1rem 0; }
-    input[type="file"] { margin: 1rem 0; font-size: 1rem; }
-    button { background-color: #28a745; color: #ffffff; border: none; padding: 0.75rem 1.5rem; border-radius: 5px; cursor: pointer; font-size: 1rem; transition: background-color 0.2s; }
-    button:hover { background-color: #218838; }
-    .output { margin-top: 1rem; font-weight: bold; min-height: 2rem; }
-    .error { color: red; font-weight: 400; }
-    .success { color: green; font-weight: 400; }
-    .recaptcha-note { text-align: center; margin: 1rem 0; font-size: 0.9rem; color: #6c757d; font-style: italic; }
-    /* Modal Styles */
-    #result-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 9998; }
-    #modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; border-radius: 8px; padding: 2rem; text-align: center; max-width: 400px; width: 80%; box-shadow: 0 2px 10px rgba(0,0,0,0.3); z-index: 9999; }
-    #modal-title { font-size: 1.5rem; margin-bottom: 1rem; }
-    #modal-text { font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.5; }
-    #close-modal { background-color: #007bff; color: #ffffff; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 1rem; }
-    #close-modal:hover { background-color: #0056b3; }
+    /* Basic reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      color: #343a40;
+      text-align: center;
+    }
+
+    header {
+      background-color: #343a40;
+      color: #ffffff;
+      padding: 2rem 1rem;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 1.2rem;
+      font-weight: 300;
+    }
+
+    section {
+      max-width: 800px;
+      margin: 0 auto 2rem auto;
+      padding: 0 1rem;
+      text-align: center;
+    }
+
+    .demo-section {
+      border: 2px dashed #6c757d;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin: 2rem auto;
+      max-width: 600px;
+      background-color: #ffffff;
+    }
+
+    h2 {
+      margin-bottom: 1rem;
+      font-weight: bold;
+      font-size: 1.5rem;
+    }
+
+    .upload-area {
+      margin: 1rem 0;
+    }
+
+    input[type="file"] {
+      margin: 1rem 0;
+      font-size: 1rem;
+    }
+
+    button {
+      background-color: #28a745;
+      color: #ffffff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #218838;
+    }
+
+    .output {
+      margin-top: 1rem;
+      font-weight: bold;
+      min-height: 2rem; /* ensures a bit of space */
+    }
+
+    .error {
+      color: red;
+      font-weight: 400;
+    }
+
+    .success {
+      color: green;
+      font-weight: 400;
+    }
+
+    .recaptcha-note {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+      color: #6c757d;
+      font-style: italic;
+    }
+
+    /* ===== Modal Styles ===== */
+    #result-modal {
+      display: none; /* hidden by default */
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9998;
+    }
+    #modal-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      max-width: 400px;
+      width: 80%;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      z-index: 9999;
+    }
+    #modal-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    #modal-text {
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    #close-modal {
+      background-color: #007bff;
+      color: #ffffff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    #close-modal:hover {
+      background-color: #0056b3;
+    }
   </style>
 </head>
 <body>
@@ -46,7 +170,10 @@
       <div class="upload-area">
         <input type="file" id="file-upload" accept="audio/*">
       </div>
+
+      <!-- The button that triggers the processing -->
       <button id="process-button">Process Recording</button>
+
       <div class="output" id="output-area">
         <p>Upload a file to see the results!</p>
       </div>
@@ -57,11 +184,13 @@
     <h2>Integrations</h2>
     <p>Easily integrate with platforms like TrackDrive, Retreaver, and more!</p>
   </section>
+
+  <!-- A note for recaptcha v3 (no checkbox) -->
   <div class="recaptcha-note">
     Protected by reCAPTCHA v3
   </div>
 
-  <!-- Popup Modal -->
+  <!-- ========== POPUP MODAL for Results ========== -->
   <div id="result-modal">
     <div id="modal-content">
       <h2 id="modal-title"></h2>
@@ -70,8 +199,9 @@
     </div>
   </div>
 
-  <!-- Confetti Script -->
+  <!-- ========== Confetti (minimal inline version) ========== -->
   <script>
+    // Minimal inline version of "canvas-confetti":
     function confettiEffect() {
       const count = 200;
       function fire(particleRatio) {
@@ -85,6 +215,7 @@
           particle.style.left = Math.random() * 100 + '%';
           particle.style.top = Math.random() * 100 + '%';
           document.body.appendChild(particle);
+          // Remove after 1s
           setTimeout(() => particle.remove(), 1000);
         }
       }
@@ -97,11 +228,16 @@
   </script>
 
   <script>
-    // Rate Limiting (Client-Side)
+    // ==================================
+    // 1) Rate Limiting (Client-Side)
+    // ==================================
     function checkRateLimit() {
       const rateLimitData = localStorage.getItem('uploadAttempts');
-      const today = new Date().toDateString();
-      let attemptsObj = { date: today, attempts: 0 };
+      const today = new Date().toDateString(); // e.g., "Thu Jan 9 2025"
+      let attemptsObj = {
+        date: today,
+        attempts: 0
+      };
       if (rateLimitData) {
         const parsedData = JSON.parse(rateLimitData);
         if (parsedData.date === today) {
@@ -110,12 +246,15 @@
       }
       return attemptsObj;
     }
+
     function incrementRateLimit(attemptsObj) {
       attemptsObj.attempts += 1;
       localStorage.setItem('uploadAttempts', JSON.stringify(attemptsObj));
     }
 
-    // reCAPTCHA v3
+    // ==================================
+    // 2) reCAPTCHA v3
+    // ==================================
     function getRecaptchaToken() {
       return new Promise((resolve, reject) => {
         if (!window.grecaptcha) {
@@ -123,14 +262,16 @@
           return;
         }
         grecaptcha.ready(() => {
-          grecaptcha.execute('6LeCZbMqAAAAACTPAVLrS-NQtNWat69AfwVqG__', { action: 'upload' })
+          grecaptcha.execute('6LeCZbMqAAAAACTPAVLrS-NQtNWat69AfwVZqG__', { action: 'upload' })
             .then(token => resolve(token))
             .catch(err => reject(err));
         });
       });
     }
 
-    // Popup Modal & Confetti
+    // ==================================
+    // 3) Popup Modal & Confetti
+    // ==================================
     function showModal(disposition, callNotes) {
       const modal = document.getElementById('result-modal');
       modal.style.display = 'block';
@@ -139,22 +280,27 @@
         <strong>Disposition:</strong> ${disposition}<br/><br/>
         <strong>Call Notes:</strong> ${callNotes}
       `;
+      // Trigger confetti
       confettiEffect();
     }
+
     function hideModal() {
       document.getElementById('result-modal').style.display = 'none';
     }
+
     document.getElementById('close-modal').addEventListener('click', hideModal);
 
-    // Upload function that sends the file
-    async function uploadFile(formData) {
-      // Create an AbortController with a 10-second timeout for the upload request
+    // ==================================
+    // 4) Upload with 10-Minute Timeout
+    // ==================================
+    function uploadWithTimeout(formData) {
       return new Promise(async (resolve, reject) => {
         const controller = new AbortController();
         const signal = controller.signal;
-        const uploadTimeout = setTimeout(() => {
+        // 10-minute timer
+        const timeout = setTimeout(() => {
           controller.abort();
-        }, 10000); // 10 seconds
+        }, 600000); // 10 minutes in ms
 
         try {
           const response = await fetch('https://universal-method.app.n8n.cloud/webhook/site-demo', {
@@ -162,86 +308,90 @@
             body: formData,
             signal
           });
-          clearTimeout(uploadTimeout);
+          clearTimeout(timeout); // no timeout occurred
           if (!response.ok) {
             throw new Error(`Server returned ${response.status} - ${response.statusText}`);
           }
           const data = await response.json();
           resolve(data);
         } catch (err) {
-          // If it fails (including timeout), resolve as null so that we start polling.
-          resolve(null);
+          if (err.name === 'AbortError') {
+            reject(new Error('Request timed out after 10 minutes.'));
+          } else {
+            // For any error, we resolve with null to trigger polling below.
+            resolve(null);
+          }
         }
       });
     }
 
-    // Poll for the result every 10 seconds until we get a valid response.
-    async function pollForResult(pollInterval = 10000) {
-      // You might need a job ID from the initial upload.
-      // For demonstration, we assume no job ID is required or that the server uses session info.
-      return new Promise((resolve, reject) => {
+    // ==================================
+    // 5) Polling Function
+    // ==================================
+    function pollForResult(pollInterval = 10000) {
+      return new Promise((resolve) => {
         const poll = async () => {
           try {
-            // Create an AbortController for each poll request with a 10-second timeout.
+            // Set a 10-second timeout for each polling GET request
             const controller = new AbortController();
             const signal = controller.signal;
             const pollTimeout = setTimeout(() => {
               controller.abort();
             }, 10000);
 
-            const response = await fetch('https://universal-method.app.n8n.cloud/webhook/site-demo', {
+            const response = await fetch('https://universal-method.app.n8n.cloud/webhook/site-demo', { 
               method: 'GET',
               signal
             });
             clearTimeout(pollTimeout);
             if (response.ok) {
               const data = await response.json();
-              // Check if data contains the required keys (or any response you expect)
-              if (
-                (Array.isArray(data) && data.length && data[0]['Dispo Name'] && data[0]['Call Notes']) ||
-                (data['Dispo Name'] && data['Call Notes'])
-              ) {
+              // Check if data is valid (supports both single and array responses)
+              if ( (Array.isArray(data) && data.length > 0 && data[0]['Dispo Name'] && data[0]['Call Notes']) ||
+                   (data && data['Dispo Name'] && data['Call Notes']) ) {
                 resolve(data);
                 return;
               }
             }
           } catch (err) {
-            // Likely a timeout or network error. We simply ignore it.
+            // Ignore errors; they will trigger another poll attempt
           }
-          // Wait for pollInterval and try again
+          // If no valid response, wait and try again
           setTimeout(poll, pollInterval);
         };
         poll();
       });
     }
 
-    // Main Upload Handler (modified to use polling)
+    // ==================================
+    // 6) Main Upload Handler with Polling
+    // ==================================
     document.getElementById('process-button').addEventListener('click', async () => {
       const fileInput = document.getElementById('file-upload');
       const outputArea = document.getElementById('output-area');
-      outputArea.innerHTML = '';
+      outputArea.innerHTML = ''; // Clear any existing messages
 
-      // Rate limit check
+      // 1) Rate limit check
       const attemptsObj = checkRateLimit();
       if (attemptsObj.attempts >= 3) {
         outputArea.innerHTML = '<p class="error">You have reached the 3-uploads-per-day limit.</p>';
         return;
       }
 
-      // File selected check
+      // 2) Make sure a file is selected
       if (!fileInput.files.length) {
         outputArea.innerHTML = '<p class="error">Please upload a file first!</p>';
         return;
       }
       const file = fileInput.files[0];
 
-      // File size check (<= 200 MB)
+      // 3) Check file size (<= 200 MB)
       if (file.size > 200 * 1024 * 1024) {
         outputArea.innerHTML = '<p class="error">File size exceeds 200MB limit.</p>';
         return;
       }
 
-      // Check audio duration (<= 1 hour)
+      // 4) Check audio duration (<= 1 hour)
       outputArea.innerHTML = '<p>Checking file duration...</p>';
       const audioEl = document.createElement('audio');
       audioEl.src = URL.createObjectURL(file);
@@ -252,7 +402,7 @@
           return;
         }
 
-        // Get reCAPTCHA token
+        // 5) reCAPTCHA
         outputArea.innerHTML = '<p>Verifying reCAPTCHA. Please wait...</p>';
         let recaptchaToken;
         try {
@@ -262,49 +412,45 @@
           return;
         }
 
-        // Prepare FormData and upload
+        // 6) Prepare data and upload
         outputArea.innerHTML = '<p>Uploading your file...</p>';
         const formData = new FormData();
         formData.append('file', file);
         formData.append('recaptchaToken', recaptchaToken);
 
-        // Attempt to upload (with a 10-second fetch timeout)
-        const uploadResponse = await uploadFile(formData);
+        try {
+          // 7) Upload with 10-min timeout
+          const data = await uploadWithTimeout(formData);
 
-        // Increment the rate limit count even if the uploadResponse is null.
-        incrementRateLimit(attemptsObj);
+          // 8) Rate limit count up
+          incrementRateLimit(attemptsObj);
 
-        if (uploadResponse && 
-            ((Array.isArray(uploadResponse) && uploadResponse.length && uploadResponse[0]['Dispo Name'] && uploadResponse[0]['Call Notes']) ||
-             (uploadResponse['Dispo Name'] && uploadResponse['Call Notes']))) {
-          // If we got a valid response immediately.
-          outputArea.innerHTML = '<p class="success">Auto QC Completed!</p>';
-          let disposition, callNotes;
-          if (Array.isArray(uploadResponse)) {
-            ({ ['Dispo Name']: disposition, ['Call Notes']: callNotes } = uploadResponse[0]);
+          // 9) Check if we got a valid response; if not, start polling
+          let validData = null;
+          if (data && 
+             ((Array.isArray(data) && data.length > 0 && data[0]['Dispo Name'] && data[0]['Call Notes']) ||
+              (data['Dispo Name'] && data['Call Notes']))) {
+            validData = data;
           } else {
-            disposition = uploadResponse['Dispo Name'];
-            callNotes = uploadResponse['Call Notes'];
+            outputArea.innerHTML = '<p>Processing... Polling for result every 10 seconds.</p>';
+            validData = await pollForResult();
           }
-          showModal(disposition, callNotes);
-        } else {
-          // No valid response yet. Start polling.
-          outputArea.innerHTML = '<p>Processing... Polling for result every 10 seconds.</p>';
-          try {
-            const pollData = await pollForResult();
-            if (Array.isArray(pollData)) {
-              const { ['Dispo Name']: disposition, ['Call Notes']: callNotes } = pollData[0];
-              outputArea.innerHTML = '<p class="success">Auto QC Completed!</p>';
-              showModal(disposition, callNotes);
-            } else if (pollData && pollData['Dispo Name'] && pollData['Call Notes']) {
-              outputArea.innerHTML = '<p class="success">Auto QC Completed!</p>';
-              showModal(pollData['Dispo Name'], pollData['Call Notes']);
-            } else {
-              outputArea.innerHTML = '<p class="error">Unexpected response format after polling.</p>';
-            }
-          } catch (error) {
-            outputArea.innerHTML = `<p class="error">Polling Error: ${error.message}</p>`;
+
+          // Process the valid response
+          if (Array.isArray(validData)) {
+            const { ['Dispo Name']: disposition, ['Call Notes']: callNotes } = validData[0];
+            outputArea.innerHTML = '<p class="success">Auto QC Completed!</p>';
+            showModal(disposition, callNotes);
+          } else if (validData && validData['Dispo Name'] && validData['Call Notes']) {
+            const disposition = validData['Dispo Name'];
+            const callNotes = validData['Call Notes'];
+            outputArea.innerHTML = '<p class="success">Auto QC Completed!</p>';
+            showModal(disposition, callNotes);
+          } else {
+            outputArea.innerHTML = '<p class="error">Error: Unexpected server response format.</p>';
           }
+        } catch (error) {
+          outputArea.innerHTML = `<p class="error">Error: ${error.message}</p>`;
         }
       });
 
